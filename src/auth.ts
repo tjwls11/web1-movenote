@@ -6,6 +6,7 @@ import { connectToDatabase } from '@/libs/mongodb'
 import { JWT } from 'next-auth/jwt'
 import { User as NextAuthUser } from 'next-auth'
 import { Awaitable } from 'next-auth'
+import bcrypt from 'bcryptjs'
 
 interface CustomUser extends NextAuthUser {
   id: string
@@ -40,34 +41,36 @@ export const config: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials): Promise<CustomUser | null> {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('이메일과 비밀번호를 입력해주세요.')
-        }
-
         try {
-          const db = await connectToDatabase()
-          const user = await db.collection('users').findOne({
-            email: credentials.email,
-          })
-
-          if (!user) {
-            throw new Error('등록되지 않은 사용자입니다.')
+          const { email, password } = credentials as {
+            email: string
+            password: string
           }
 
-          if (user.password !== credentials.password) {
-            throw new Error('비밀번호가 일치하지 않습니다.')
+          const db = await connectToDatabase()
+          const user = await db.collection('users').findOne({ email })
+
+          if (!user) {
+            console.log('User not found:', email)
+            return null
+          }
+
+          const isValid = await bcrypt.compare(password, user.password)
+
+          if (!isValid) {
+            console.log('Invalid password for user:', email)
+            return null
           }
 
           return {
             id: user._id.toString(),
             email: user.email,
-            name: user.name || null,
-            type: user.type || 'credentials',
+            name: user.name || '',
+            image: user.image || '',
           }
         } catch (error) {
-          const authError = error as AuthError
-          console.error('로그인 에러:', authError)
-          throw authError
+          console.error('Auth error:', error)
+          return null
         }
       },
     }),
