@@ -217,12 +217,23 @@ export default function MyPage() {
             <div className="flex flex-col items-center text-center">
               <div className="relative w-[120px] h-[120px] mx-auto">
                 <Image
-                  src={session?.user?.image || '/default-avatar.png'}
+                  src={
+                    userData?.image ||
+                    session?.user?.image ||
+                    '/default-avatar.png'
+                  }
                   alt="Profile"
                   width={120}
                   height={120}
+                  style={{
+                    objectFit: 'cover',
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                  }}
+                  className="ring-2 ring-[#2d5a27]"
                   priority
-                  className="rounded-full object-cover ring-2 ring-[#2d5a27]"
+                  unoptimized
                 />
                 <button
                   onClick={handleImageClick}
@@ -239,7 +250,7 @@ export default function MyPage() {
                   className="hidden"
                 />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2 mt-4">
                 {userData?.name || session?.user?.name}
               </h2>
               <p className="text-gray-600">
@@ -313,9 +324,11 @@ export default function MyPage() {
                               : '/default-movie.png'
                           }
                           alt={movie.title ? movie.title : '영화 포스터'}
-                          fill={true}
-                          priority={true}
-                          className="rounded-lg object-cover"
+                          width={128}
+                          height={192}
+                          style={{ objectFit: 'cover' }}
+                          priority={index < 2}
+                          className="rounded-lg"
                           sizes="(max-width: 768px) 100vw, 128px"
                         />
                       </div>
@@ -352,9 +365,11 @@ export default function MyPage() {
                               : '/default-movie.png'
                           }
                           alt={movie.title ? movie.title : '영화 포스터'}
-                          fill={true}
-                          priority={true}
-                          className="rounded-lg object-cover"
+                          width={128}
+                          height={192}
+                          style={{ objectFit: 'cover' }}
+                          priority={index < 2}
+                          className="rounded-lg"
                           sizes="(max-width: 768px) 100vw, 128px"
                         />
                       </div>
