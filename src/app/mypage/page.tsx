@@ -114,7 +114,7 @@ export default function MyPage() {
         const data = await response.json()
         const favoriteMovieIds = data.movies || []
 
-        // 찜한 영화 ID로 영화 정보 가져��기
+        // 찜한 영화 ID로 영화 정보 가져오기
         const favoriteMoviePromises = favoriteMovieIds.map(
           async (id: number) => {
             const movieResponse = await fetch(
@@ -249,7 +249,7 @@ export default function MyPage() {
                 <button
                   onClick={handleImageClick}
                   className="absolute bottom-4 right-0 bg-[#2d5a27] p-2 rounded-full text-white hover:bg-[#234620] transition-colors"
-                  title="프로��� 이미지 변경"
+                  title="프로필 이미지 변경"
                 >
                   <FaCamera />
                 </button>
