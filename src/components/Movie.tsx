@@ -74,7 +74,7 @@ export default function Movie() {
         setTotalPages(response.data.total_pages)
         setCurrentPage(newPage)
       } catch (error) {
-        console.error('영화 목록을 불러오는 데 실패했습니다:', error)
+        console.error('영화 목록을 불러오는 데 실패했���니다:', error)
       } finally {
         setIsLoading(false)
       }
@@ -96,6 +96,11 @@ export default function Movie() {
   // 영화 카드 컴포넌트
   const MovieCard = ({ movie }: { movie: Movie }) => {
     const handleMovieClick = async () => {
+      if (!session?.user?.email) {
+        console.error('로그인이 필요합니다')
+        return
+      }
+
       try {
         const saveResponse = await fetch(`/api/user/recent-movie`, {
           method: 'POST',
@@ -103,21 +108,30 @@ export default function Movie() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            user: session?.user?.name || 'Anonymous',
-            movieId: movie.id,
+            user: session.user.email,
+            movieId: movie.id.toString(),
+            title: movie.title,
+            poster_path: movie.poster_path,
+            vote_average: movie.vote_average,
           }),
         })
 
         const saveData = await saveResponse.json()
         if (saveResponse.ok) {
-          console.log('영화가 성공적으로 저장되었습니다.')
+          console.log('영화가 성공적으로 저장되었습니다:', saveData)
           router.push(`/movie/${movie.id}`)
         } else {
-          console.error('영화 저장 실패:', saveData.message || 'Unknown error')
+          console.error('영화 저장 실패:', saveData.error || 'Unknown error')
         }
       } catch (error) {
         console.error('영화 저장 중 오류 발생:', error)
       }
+    }
+
+    // 포스터 이미지 URL 생성 함수
+    const getPosterUrl = (path: string | null) => {
+      if (!path) return '/images/default-movie-poster.jpg' // 기본 이미지 경로
+      return `https://image.tmdb.org/t/p/w500${path}`
     }
 
     return (
@@ -125,13 +139,20 @@ export default function Movie() {
         onClick={handleMovieClick}
         className="bg-white rounded-lg overflow-hidden transition-transform transform hover:scale-105 cursor-pointer w-64 m-4 flex flex-col items-center border border-gray-300"
       >
-        <Image
-          src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-          alt={movie.title}
-          width={200}
-          height={300}
-          layout="responsive"
-        />
+        <div className="relative w-full aspect-[2/3]">
+          <Image
+            src={getPosterUrl(movie.poster_path)}
+            alt={movie.title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
+            priority
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.src = '/images/default-movie-poster.jpg'
+            }}
+          />
+        </div>
         <div className="p-4 h-full flex flex-col justify-between items-center">
           <p className="text-gray-600 text-center">
             평점: {movie.vote_average}

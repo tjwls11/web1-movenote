@@ -24,6 +24,21 @@ interface Movie {
   poster_path: string
 }
 
+const apiKey = process.env.NEXT_PUBLIC_MOVIE_API_KEY
+
+const fetchMovieDetails = async (movieId: number) => {
+  try {
+    const response = await fetch(
+      `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=ko-KR`
+    )
+    if (!response.ok) throw new Error('영화 정보를 가져오는데 실패했습니다')
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching movie details:', error)
+    return null
+  }
+}
+
 export default function MyPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -80,10 +95,35 @@ export default function MyPage() {
 
       try {
         const response = await fetch(
-          `/api/movies/recent?email=${session.user.email}`
+          `/api/user/recent-movie?email=${encodeURIComponent(
+            session.user.email
+          )}`,
+          {
+            method: 'GET',
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          }
         )
+
+        if (!response.ok) {
+          throw new Error('최근 본 영화 조회에 실패했습니다')
+        }
+
         const data = await response.json()
-        setRecentMovies(data.movies || [])
+
+        // 각 영화의 상세 정보를 TMDB API로 가져오기
+        if (data.movies && data.movies.length > 0) {
+          const moviesWithDetails = await Promise.all(
+            data.movies.map(async (movie: any) => {
+              const details = await fetchMovieDetails(movie.id)
+              return details || movie // 실패시 기존 데이터 사용
+            })
+          )
+          setRecentMovies(moviesWithDetails)
+        } else {
+          setRecentMovies([])
+        }
       } catch (error) {
         console.error('최근 본 영화 조회 실패:', error)
       }
@@ -92,7 +132,7 @@ export default function MyPage() {
     if (status === 'authenticated') {
       fetchRecentMovies()
     }
-  }, [status])
+  }, [status, session?.user?.email])
 
   // 찜한 영화 데이터 가져오기
   useEffect(() => {
@@ -142,7 +182,7 @@ export default function MyPage() {
 
         if (data.success) {
           setCurrentImage(data.user.image)
-          // 세션 업데이트를 위한 페이지 새로고침
+          // 세션 ��데이트를 위한 페이지 새로고침
           window.location.reload()
         }
       } catch (error) {
@@ -198,6 +238,11 @@ export default function MyPage() {
     } finally {
       setModalOpen(false)
     }
+  }
+
+  const getPosterUrl = (path: string | null) => {
+    if (!path) return `https://image.tmdb.org/t/p/w500/null`
+    return `https://image.tmdb.org/t/p/w500${path}`
   }
 
   if (isLoading) {
@@ -314,22 +359,21 @@ export default function MyPage() {
                     <div
                       key={`${movie.id}-${index}`}
                       className="flex-shrink-0 w-1/5 text-center"
-                      onClick={() => handleMovieClick(movie.title)}
                     >
                       <div className="relative w-32 h-48">
                         <Image
-                          src={
-                            movie.poster_path
-                              ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                              : '/default-movie.png'
-                          }
-                          alt={movie.title ? movie.title : '영화 포스터'}
+                          src={getPosterUrl(movie.poster_path)}
+                          alt={movie.title || '영화 포스터'}
                           width={128}
                           height={192}
                           style={{ objectFit: 'cover' }}
                           priority={index < 2}
                           className="rounded-lg"
                           sizes="(max-width: 768px) 100vw, 128px"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = `https://image.tmdb.org/t/p/w500/null`
+                          }}
                         />
                       </div>
                       <h4 className="mt-2 text-sm font-semibold">
@@ -340,7 +384,7 @@ export default function MyPage() {
                 </div>
               ) : (
                 <div className="text-gray-500 text-center py-4">
-                  최근에 본 영화가 없습니다.
+                  찜근에 본 영화가 없습니다.
                 </div>
               )}
             </div>
