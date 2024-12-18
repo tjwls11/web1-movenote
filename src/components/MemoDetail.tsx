@@ -10,7 +10,7 @@ import Loading from './Loading'
 interface Memo {
   _id: string
   title: string
-  description: string
+  content: string
   createdAt: string
   updatedAt: string
   folderId: string
@@ -124,37 +124,23 @@ export default function MemoDetail({ id }: { id: string }) {
         <div className="flex justify-between items-start mb-6">
           <h1 className="text-3xl font-bold text-gray-800">{memo?.title}</h1>
           <div className="flex items-center gap-4">
-            <select
-              value={memo?.folderId || '전체'}
-              onChange={(e) => handleFolderChange(e.target.value)}
-              className="px-3 py-2 border rounded-md text-sm text-gray-600 focus:outline-none focus:border-green-500"
-            >
-              {folders.map((folder) => (
-                <option key={folder.id} value={folder.id}>
-                  {folder.name}
-                </option>
-              ))}
-            </select>
-
             <div className="flex gap-4">
-              <MemoRemoveBtn
-                id={memo?._id}
-                onDelete={() => router.push('/memo')}
-              />
               <Link
                 href={`/editMemo/${memo?._id}`}
                 className="text-green-600 hover:text-green-700 transition-colors"
               >
                 <HiPencilAlt size={24} />
               </Link>
+              <MemoRemoveBtn
+                id={memo._id}
+                onDelete={() => router.push('/memo')}
+              />
             </div>
           </div>
         </div>
         <div className="prose max-w-none mb-8">
           <h1>{memo.title}</h1>
-          <p className="text-gray-600 whitespace-pre-wrap">
-            {memo.description}
-          </p>
+          <p className="text-gray-600 whitespace-pre-wrap">{memo.content}</p>
         </div>
         <div className="flex justify-between items-center text-sm text-gray-500 mb-6">
           <p>작성일: {new Date(memo.createdAt).toLocaleDateString()}</p>

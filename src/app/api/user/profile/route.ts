@@ -20,7 +20,6 @@ export async function GET() {
     const user = await db
       .collection('users')
       .findOne({ email: session.user.email })
-    console.log('User found:', user)
 
     if (!user) {
       return NextResponse.json(

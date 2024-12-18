@@ -52,7 +52,7 @@ export default function MemoList({ memos }: MemoListProps) {
                 <Link href={`/memo/${memo._id}`}>
                   <div className="p-6">
                     <div className="text-xl font-bold text-gray-800 mb-2">
-                      {memo.content}
+                      {memo.title}
                     </div>
                     <div className="flex justify-between text-sm text-gray-500">
                       <p>
